@@ -6,8 +6,8 @@
 #include <sys/mman.h>
 
 #include "arm64.h"
-#include <macho.h>
-#include <patchfinder.h>
+#include "macho.h"
+#include "patchfinder.h"
 
 struct section_64* pf_find_section(void* macho, const char* segname, const char* sectname) {
     struct segment_command_64* segment = macho_get_segment_by_segname(macho, segname);

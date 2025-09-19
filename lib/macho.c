@@ -5,7 +5,7 @@
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 
-#include <macho.h>
+#include "macho.h"
 
 const char* macho_get_arch(void* macho, struct mach_header_64* header) {
     switch (header->cputype) {
