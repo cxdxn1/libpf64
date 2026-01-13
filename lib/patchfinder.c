@@ -11,27 +11,28 @@
 
 struct section_64* pf_find_section(void* macho, const char* segname, const char* sectname) {
     struct segment_command_64* segment = macho_get_segment_by_segname(macho, segname);
-    struct section_64* section = macho_get_section_by_sectname(macho, segment, sectname);
     if(segment == NULL) return NULL;
+    struct section_64* section = macho_get_section_by_sectname(macho, segment, sectname);
     if(section == NULL) return NULL;
 
     return section;
 }
 
-// objc string support?
+// reduntant for cstrings?
+/*
 uint64_t pf_find_string(void* macho, const char* segname, const char* sectname, const char* string) {
     struct section_64* section = pf_find_section(macho, segname, sectname);
     if (section == NULL) return 0;
 
     const uint8_t* sectionData = (const uint8_t*)macho + section->offset;
     for (size_t i = 0; i + strlen(string) + 1 <= section->size; i++) {
-        printf("[DEBUG] Looking in %s,%s: offset=0x%x size=0x%llx addr=0x%llx\n", segname, sectname, section->offset, section->size, section->addr);
         if (memcmp(sectionData + i, string, strlen(string)) == 0) {
             return section->offset + i;
         }
     }
     return 0;
 }
+*/
 
 const char* pf_find_string_data(void* macho, const char* segname, const char* sectname, const char* string) {
     struct section_64* section = pf_find_section(macho, segname, sectname);
@@ -49,7 +50,7 @@ const char* pf_find_string_data(void* macho, const char* segname, const char* se
 
 uint64_t pf_step64(void* macho, struct section_64* section, uint64_t start, uint32_t insn, uint32_t mask) {
     struct segment_command_64* segment = macho_get_segment_by_section_ptr(macho, section);
-    if(segment == NULL) return -1;
+    if(segment == NULL) return 0;
     if(segment->initprot & VM_PROT_EXECUTE) {
         uint8_t* sectionData = (uint8_t*)macho + section->offset;
         for(uint64_t i = 0; i + 4 <= section->size; i += 4) {
@@ -59,37 +60,38 @@ uint64_t pf_step64(void* macho, struct section_64* section, uint64_t start, uint
             }
         }
     }
-    return -1;
+    return 0;
 }
 
-// TODO: add decoding logic for more insns
+// TODO: this is shit, rewrite this
 uint64_t pf_xref64(void* macho, struct section_64* section, uint64_t from) {
     struct segment_command_64* segment = macho_get_segment_by_section_ptr(macho, section);
-    if(segment == NULL) return -1;
-    if (segment->initprot & VM_PROT_EXECUTE) {
-        uint8_t* sectionData = (uint8_t*)macho + section->offset;
-        for (uint64_t i = 0; i + 8 <= section->size; i += 4) {
-            uint32_t insn = *(uint32_t*)(sectionData + i);
-            uint64_t va = section->addr + i;
+    if (segment == NULL) return 0;
+    if ((segment->initprot & VM_PROT_EXECUTE) == 0) return 0;
 
-            uint64_t adrp_target = arm64_decode_adrp_insn(insn, va);
-            if (adrp_target != -1) {
-                uint32_t next_insn = *(uint32_t*)(sectionData + i + 4);
-                uint64_t add_target = arm64_decode_add_insn(next_insn, adrp_target);
+    uint8_t* sectionData = (uint8_t*)macho + section->offset;
+    uint64_t section_va = section->addr;
+    uint64_t section_size = section->size;
 
-                if (add_target == from) {
-                    return va;
-                }
-            }
+    for (uint64_t i = 0; i + 8 <= section_size; i += 4) {
+        uint32_t insn = *(uint32_t*)(sectionData + i);
+        uint64_t va = section_va + i;
 
-            uint64_t adr_target = arm64_decode_adr_insn(insn, va);
-            if(adr_target != -1) {
-                if(adr_target == from) {
-                    return va;
-                }
+        uint64_t adrp_target = arm64_decode_adrp_insn(insn, va);
+        if (adrp_target != 0) {
+            printf("[pf_info] ADRP at VA 0x%llx -> page-target 0x%llx (insn=0x%08x)\n", va, adrp_target, insn);
+            uint32_t next_insn = *(uint32_t*)(sectionData + i + 4);
+            uint64_t add_target = arm64_decode_add_insn(next_insn, adrp_target);
+            if (add_target != 0) {
+                printf("[pf] next ADD yields 0x%llx (looking for 0x%llx)\n", add_target, from);
+                if (add_target == from) return va;
             }
         }
+        uint64_t adr_target = arm64_decode_adr_insn(insn, va);
+        if (adr_target != 0) {
+            printf("[pf_info] ADR  at VA 0x%llx -> 0x%llx (insn=0x%08x)\n", va, adr_target, insn);
+            if (adr_target == from) return va;
+        }
     }
-    return -1;
+    return 0;
 }
-
