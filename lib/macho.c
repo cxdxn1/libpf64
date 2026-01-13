@@ -43,6 +43,10 @@ const char* macho_load_cmd_to_str(uint32_t cmd) {
     }
 }
 
+static struct load_command* macho_increment_load_cmd(struct load_command* cmd) {
+    return (struct load_command*)((uint8_t*)cmd + cmd->cmdsize);
+}
+
 size_t macho_get_size(void* macho) {
     struct mach_header_64* header = (struct mach_header_64*)macho;
     struct load_command* loadCmd = macho + sizeof(struct mach_header_64);
@@ -53,7 +57,7 @@ size_t macho_get_size(void* macho) {
             size_t end = (size_t)(segment->fileoff + segment->filesize);
             if(end > 0) size = end;
         }
-        loadCmd++;
+        loadCmd = macho_increment_load_cmd(loadCmd);
     }
     return size;
 }
@@ -66,7 +70,7 @@ struct segment_command_64* macho_get_segment_by_segname(void* macho, const char*
             struct segment_command_64* segment = (struct segment_command_64*)loadCmd;
             if(strcmp(segment->segname, segname) == 0) return segment;
         }
-        loadCmd++;
+        loadCmd = macho_increment_load_cmd(loadCmd);
     }
     return NULL;
 }
@@ -89,7 +93,7 @@ struct segment_command_64* macho_get_segment_by_section_ptr(void* macho, struct 
         for(int j = 0; j < segment->nsects; j++) {
             if(&sections[j] == section) return segment;
         }
-        loadCmd++;
+        loadCmd = macho_increment_load_cmd(loadCmd);
     }
     return NULL;
 }
@@ -102,7 +106,7 @@ bool macho_has_symtab(void* macho, struct symtab_command* symtab) {
             memcpy(symtab, loadCmd, sizeof(struct symtab_command));
             return true;
         }
-        loadCmd++;
+        loadCmd = macho_increment_load_cmd(loadCmd);
     }
     return false;
 }
@@ -124,7 +128,7 @@ uint64_t macho_translate_fileoff_to_va(void* macho, uint64_t fileoff) {
                 return va;
             }
         }
-        loadCmd++;
+        loadCmd = macho_increment_load_cmd(loadCmd);
     }
     return 0;
 }
@@ -141,7 +145,7 @@ uint64_t macho_translate_va_to_fileoff(void* macho, uint64_t va) {
                 return fileoff;
             }
         }
-        loadCmd++;
+        loadCmd = macho_increment_load_cmd(loadCmd);
     }
     return 0;
 }
