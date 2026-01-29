@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include "arm64.h"
 
 static inline int64_t arm64_sxt64(int64_t imm, uint8_t numBits) {

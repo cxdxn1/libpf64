@@ -4,6 +4,7 @@
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 const char* macho_get_arch(void* macho, struct mach_header_64* header);
 uint32_t macho_get_magic(void* macho);
@@ -13,8 +14,8 @@ bool macho_has_symtab(void* macho, struct symtab_command* symtab);
 size_t macho_get_size(void* macho);
 
 struct segment_command_64* macho_get_segment_by_segname(void* macho, const char* segname);
-struct section_64* macho_get_section_by_sectname(void* macho, struct segment_command_64* segment, const char* sectname);
 struct segment_command_64* macho_get_segment_by_section_ptr(void* macho, struct section_64* section);
+struct section_64* macho_get_section_by_sectname(void* macho, struct segment_command_64* segment, const char* sectname);
 
 uint64_t macho_get_base_addr(void* macho);
 uint64_t macho_translate_fileoff_to_va(void* macho, uint64_t fileoff);

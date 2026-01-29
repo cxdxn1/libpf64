@@ -2,6 +2,7 @@
 #define arm64_h
 
 #include <stdint.h>
+#include <stdio.h>
 
 #define ADRP_PAGESIZE 0x4000
 #define ADRP_PAGEMASK  (ADRP_PAGESIZE - 1) // 0x3FFF if page size is 0x4000

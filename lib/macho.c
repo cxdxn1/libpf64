@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 
@@ -74,16 +75,6 @@ struct segment_command_64* macho_get_segment_by_segname(void* macho, const char*
     }
     return NULL;
 }
-
-struct section_64* macho_get_section_by_sectname(void* macho, struct segment_command_64* segment, const char* sectname) {
-    struct section_64* section = (struct section_64*)((uint8_t*)segment + sizeof(struct segment_command_64));
-    for(int i = 0; i < segment->nsects; i++) {
-        if(strcmp(section->sectname, sectname) == 0) return section;
-        section++;
-    }
-    return NULL;
-}
-
 struct segment_command_64* macho_get_segment_by_section_ptr(void* macho, struct section_64* section) {
     struct mach_header_64* header = (struct mach_header_64*)macho;
     struct load_command* loadCmd = (struct load_command*)((uint8_t*)macho + sizeof(struct mach_header_64));
@@ -94,6 +85,15 @@ struct segment_command_64* macho_get_segment_by_section_ptr(void* macho, struct 
             if(&sections[j] == section) return segment;
         }
         loadCmd = macho_increment_load_cmd(loadCmd);
+    }
+    return NULL;
+}
+
+struct section_64* macho_get_section_by_sectname(void* macho, struct segment_command_64* segment, const char* sectname) {
+    struct section_64* section = (struct section_64*)((uint8_t*)segment + sizeof(struct segment_command_64));
+    for(int i = 0; i < segment->nsects; i++) {
+        if(strcmp(section->sectname, sectname) == 0) return section;
+        section++;
     }
     return NULL;
 }

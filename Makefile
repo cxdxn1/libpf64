@@ -1,12 +1,12 @@
 cc = clang
 lib_dir = $(wildcard lib/*.c)
-include_dir = -Iinclude
+include_dir = -Ilib
 lib = libpf64.a
 
 all: $(lib)
 
 $(lib):
-	$(cc) -g -c $(include_dir) $(lib_dir)
+	$(cc) -g $(include_dir) -c $(lib_dir)
 	ar rcs $(lib) *.o
 	rm -f *.o
 
