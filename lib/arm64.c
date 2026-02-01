@@ -10,6 +10,15 @@ static inline int64_t arm64_sxt64(int64_t imm, uint8_t numBits) {
 
 // Note to self - you always right shift by the smallest bit index in the field you're trying to extract
 
+uint64_t arm64_decode_bl_insn(uint32_t insn, uint64_t addr) {
+    if((insn & 0xFC000000) != 0x94000000) return 0;
+    uint32_t imm26 = insn & 0x03FFFFFF;
+    int64_t offset = arm64_sxt64(imm26, 26) << 2;
+
+    uint64_t target = addr + offset;
+    return target;
+}
+
 uint64_t arm64_decode_add_insn(uint32_t insn, uint64_t addr) {
     if((insn & 0x7F000000) != 0x11000000) return 0;
     uint32_t imm12 = (insn >> 12) & 0xFFF;

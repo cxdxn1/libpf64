@@ -24,6 +24,7 @@ int file_write(const char* path, void* macho, size_t size) {
     FILE* fp = fopen(path, "wb");
     if(!fp) return -1;
     fwrite(macho, 1, size, fp);
+    fflush(fp);
     fclose(fp);
 
     return 0;

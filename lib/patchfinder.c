@@ -79,7 +79,6 @@ uint64_t pf_xref64(void* macho, struct section_64* section, uint64_t from) {
 
         uint64_t adrp_target = arm64_decode_adrp_insn(insn, va);
         if (adrp_target != 0) {
-            printf("[pf_info] ADRP at VA 0x%llx -> page-target 0x%llx (insn=0x%08x)\n", va, adrp_target, insn);
             uint32_t next_insn = *(uint32_t*)(sectionData + i + 4);
             uint64_t add_target = arm64_decode_add_insn(next_insn, adrp_target);
             if (add_target != 0) {
@@ -89,7 +88,6 @@ uint64_t pf_xref64(void* macho, struct section_64* section, uint64_t from) {
         }
         uint64_t adr_target = arm64_decode_adr_insn(insn, va);
         if (adr_target != 0) {
-            printf("[pf_info] ADR  at VA 0x%llx -> 0x%llx (insn=0x%08x)\n", va, adr_target, insn);
             if (adr_target == from) return va;
         }
     }
